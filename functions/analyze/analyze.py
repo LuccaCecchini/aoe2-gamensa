@@ -4,6 +4,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+import json
 
 # === CONFIG ===
 KEY_PATH = "firebase-key.json"
@@ -53,22 +54,30 @@ for file in recordings:
 
     # 🧾 Subir a Firestore
     try:
-        if "players" not in result or "map" not in result:
+        if "players" not in result or "map_name" not in result:
             print(f"❌ Resultado inválido para {file}, faltan campos esenciales.")
             continue
 
+        players = [
+            {
+                "name": name,
+                "civ": civ,
+                "won": name in result.get("winner_names", [])
+            }
+            for name, civ in zip(result["players"], result["civilisations"])
+        ]
+
         match_data = {
             "fileName": file,
-            "map": result.get("map", "Unknown"),
+            "map": result.get("map_name", "Unknown"),
             "duration": result.get("duration", 0),
-            "started": result.get("started", int(datetime.utcnow().timestamp() * 1000)),
+            "started": int(datetime.utcnow().timestamp() * 1000),
             "uploadedAt": datetime.utcnow().isoformat(),
-            "players": result.get("players", [])
+            "players": players
         }
 
-        # Guardar también como JSON local para depuración
+        # 💾 Guardar JSON local para depuración
         with open("result.json", "w", encoding="utf-8") as f:
-            import json
             json.dump(match_data, f, ensure_ascii=False, indent=2)
 
         db.collection("matches").add(match_data)
