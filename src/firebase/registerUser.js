@@ -1,18 +1,19 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebaseConfig";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
-
-const db = getFirestore();
+import { db } from "./firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
 
 export async function registerUser(email, password, name) {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Guardamos nombre y UID en Firestore
+    // Guardamos en Firestore
     await setDoc(doc(db, "users", user.uid), {
-      name,
       uid: user.uid,
+      name,
+      email: user.email,
+      isAdmin: false // o true si lo querés promover
     });
 
     return { user, error: null };

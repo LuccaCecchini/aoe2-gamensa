@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Navbar from "./components/Navbar";
+import UploadGame from "./pages/UploadGame"
 import { listenToAuthChanges } from "./firebase/authListener";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/" element={<Home user={user} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/upload" element={<UploadGame />} />
       </Routes>
     </div>
   );
