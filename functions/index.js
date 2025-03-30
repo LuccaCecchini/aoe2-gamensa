@@ -1,12 +1,11 @@
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const admin = require("firebase-admin");
-const { analyzeRecording } = require("./agealyser/agealyser");
 const { Storage } = require("@google-cloud/storage");
+const { execSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
 admin.initializeApp();
-
 const db = admin.firestore();
 const storage = new Storage();
 
@@ -27,18 +26,27 @@ exports.processReplay = onObjectFinalized(async (event) => {
 
   await file.download({ destination: tempFilePath });
 
-  const buffer = fs.readFileSync(tempFilePath);
-  const data = await analyzeRecording(buffer);
+  try {
+    // ✅ Ejecutar script de Python desde la carpeta correcta
+    const command = `python3 analyze/analyze.py "${tempFilePath}"`;
+    execSync(command, { stdio: "inherit" });
 
-  if (data) {
+    // ✅ Leer archivo result.json generado por Python
+    const resultPath = "result.json";
+    if (!fs.existsSync(resultPath)) {
+      throw new Error("No se generó result.json");
+    }
+
+    const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
     await db.collection("matches").add({
       fileName: path.basename(filePath),
       uploadedAt: new Date().toISOString(),
       ...data,
     });
-    console.log("Partida analizada y guardada:", filePath);
-  } else {
-    console.log("No se pudo analizar la partida:", filePath);
+
+    console.log("✅ Partida procesada con éxito:", filePath);
+  } catch (err) {
+    console.error("❌ Error al procesar partida:", err);
   }
 });
 
