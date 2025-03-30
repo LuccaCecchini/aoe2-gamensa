@@ -1,40 +1,44 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const { analyzeRecording } = require("./agealyser/agealyser");
 const { Storage } = require("@google-cloud/storage");
-const os = require("os");
 const path = require("path");
-const fs = require("fs");
-
-const agealyser = require("./agealyser/agealyser"); // asegúrate de que el repo esté clonado aquí
 
 admin.initializeApp();
+
 const db = admin.firestore();
 const storage = new Storage();
 
-exports.analyzeGameUpload = functions.storage
+exports.processReplay = functions.storage
   .object()
   .onFinalize(async (object) => {
+    const bucketName = object.bucket;
     const filePath = object.name;
+
     if (!filePath.endsWith(".aoe2record")) {
       console.log("Archivo ignorado (no es .aoe2record):", filePath);
-      return null;
+      return;
     }
 
-    const bucket = storage.bucket(object.bucket);
-    const tempFilePath = path.join(os.tmpdir(), path.basename(filePath));
-    await bucket.file(filePath).download({ destination: tempFilePath });
-    console.log("Archivo descargado a:", tempFilePath);
+    const tempFilePath = `/tmp/${path.basename(filePath)}`;
+    const bucket = storage.bucket(bucketName);
+    const file = bucket.file(filePath);
 
-    // Procesar con AgeAlyser
-    const result = await agealyser(tempFilePath);
+    await file.download({ destination: tempFilePath });
 
-    // Guardar en Firestore
-    await db.collection("games").add({
-      filename: path.basename(filePath),
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      result,
-    });
+    const fs = require("fs");
+    const buffer = fs.readFileSync(tempFilePath);
 
-    console.log("Partida analizada y guardada.");
-    return null;
+    const data = await analyzeRecording(buffer);
+
+    if (data) {
+      await db.collection("matches").add({
+        fileName: path.basename(filePath),
+        uploadedAt: new Date().toISOString(),
+        ...data,
+      });
+      console.log("Partida analizada y guardada:", filePath);
+    } else {
+      console.log("No se pudo analizar la partida:", filePath);
+    }
   });
