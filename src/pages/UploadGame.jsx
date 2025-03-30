@@ -1,8 +1,8 @@
 // src/pages/UploadGame.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 
@@ -10,16 +10,26 @@ export default function UploadGame() {
   const [file, setFile] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const data = userSnap.data();
+        setIsAdmin(data?.isAdmin === true);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
-  };
-
-  const checkAdmin = async (uid) => {
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    return userSnap.exists() && userSnap.data().isAdmin === true;
   };
 
   const handleUpload = async () => {
@@ -39,7 +49,6 @@ export default function UploadGame() {
       return;
     }
 
-    const isAdmin = await checkAdmin(currentUser.uid);
     if (!isAdmin) {
       setErrorMsg("No tienes permisos para subir partidas.");
       return;
@@ -52,6 +61,10 @@ export default function UploadGame() {
     setSuccessMsg("Archivo subido exitosamente. Pronto se procesará automáticamente.");
     setFile(null);
   };
+
+  if (loading) return <div className="text-center mt-20">Verificando permisos...</div>;
+
+  if (!isAdmin) return <div className="text-center mt-20 text-red-600">No tenés permisos para subir partidas.</div>;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
