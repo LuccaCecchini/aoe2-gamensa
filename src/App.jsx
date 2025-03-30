@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Navbar from "./components/Navbar";
 import { listenToAuthChanges } from "./firebase/authListener";
 
 export default function App() {
@@ -15,18 +16,19 @@ export default function App() {
       setLoading(false);
     });
 
-    return () => {
-      if (typeof unsubscribe === "function") unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   if (loading) return <div className="text-center mt-20">Cargando...</div>;
 
   return (
-    <Routes>
-      <Route path="/" element={<Home user={user} />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-    </Routes>
+    <div className="bg-yellow-100 min-h-screen">
+      <Navbar user={user} />
+      <Routes>
+        <Route path="/" element={<Home user={user} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </div>
   );
 }
