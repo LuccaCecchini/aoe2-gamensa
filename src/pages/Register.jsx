@@ -29,7 +29,7 @@ export default function Register() {
         {errorMsg && <p className="text-red-500 mb-2">{errorMsg}</p>}
         <input
           type="text"
-          placeholder="Nombre"
+          placeholder="Nombre en Age of Empires II"
           className="w-full mb-3 px-3 py-2 border rounded"
           value={name}
           onChange={(e) => setName(e.target.value)}

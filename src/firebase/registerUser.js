@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import { db } from "./firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
@@ -8,12 +8,17 @@ export async function registerUser(email, password, name) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
+    // Guardar en Firebase Auth el displayName (opcional)
+    await updateProfile(user, {
+      displayName: name
+    });
+
     // Guardamos en Firestore
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
-      name,
+      inGameName: name, // 💡 cambio aquí
       email: user.email,
-      isAdmin: false // o true si lo querés promover
+      isAdmin: false
     });
 
     return { user, error: null };
