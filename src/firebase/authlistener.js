@@ -1,14 +1,9 @@
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebaseConfig";
+// src/firebase/authListener.js
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { app } from "./firebaseConfig";
 
-export function listenToAuthChanges(setUser) {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // Usuario autenticado
-      setUser(user);
-    } else {
-      // Usuario no autenticado
-      setUser(null);
-    }
-  });
-}
+const auth = getAuth(app);
+
+export const listenToAuthChanges = (callback) => {
+  onAuthStateChanged(auth, callback);
+};

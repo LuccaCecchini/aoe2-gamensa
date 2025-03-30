@@ -1,56 +1,33 @@
-import { useEffect, useState } from "react";
-import { auth } from "./firebase"; // Asegurate de tener este archivo configurado
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
+// src/App.jsx
+import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import { listenToAuthChanges } from "./firebase/authListener";
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsubscribe = listenToAuthChanges((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
+  if (loading) return <div className="text-center mt-20">Cargando...</div>;
 
   return (
-    <div className="bg-yellow-100 min-h-screen flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold text-center mb-4">¡Hola AoE2!</h1>
-      {user ? (
-        <>
-          <p className="mb-2">Bienvenido, {user.displayName}</p>
-          <button
-            onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded"
-          >
-            Cerrar sesión
-          </button>
-        </>
-      ) : (
-        <button
-          onClick={handleLogin}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Iniciar sesión con Google
-        </button>
-      )}
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home user={user} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </Router>
   );
 }
