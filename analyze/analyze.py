@@ -8,7 +8,7 @@ from datetime import datetime
 KEY_PATH = "firebase-key.json"
 RECORDINGS_FOLDER = "./recordings"
 AGEALYSER_SRC = os.path.abspath("../functions/agealyser/src")
-BUCKET_NAME = "aoe2-gamensa.appspot.com"
+BUCKET_NAME = "aoe2-gamensa.firebasestorage.app"
 STORAGE_FOLDER = "recordings"
 
 # === AGREGAR RUTA DE PARSER PYTHON ===
