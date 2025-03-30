@@ -3,6 +3,7 @@ import { registerUser } from "../firebase/registerUser";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -12,7 +13,7 @@ export default function Register() {
     e.preventDefault();
     setErrorMsg("");
 
-    const { user, error } = await registerUser(email, password);
+    const { user, error } = await registerUser(email, password, name);
     if (error) {
       setErrorMsg(error.message);
     } else {
@@ -26,6 +27,14 @@ export default function Register() {
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-80">
         <h2 className="text-2xl font-bold mb-4 text-center">Registrarse</h2>
         {errorMsg && <p className="text-red-500 mb-2">{errorMsg}</p>}
+        <input
+          type="text"
+          placeholder="Nombre"
+          className="w-full mb-3 px-3 py-2 border rounded"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
         <input
           type="email"
           placeholder="Email"
