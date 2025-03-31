@@ -46,5 +46,6 @@ lib-cov
 # dataconnect generated files
 .dataconnect
 
-# Firebase admin key (no subir nunca)
-analyze/firebase-key.json
+# En tu .gitignore
+functions/analyze/firebase-key.json
+
