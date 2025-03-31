@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
-import firebaseConfig from "../firebase/firebaseConfig";
+import { firebaseConfig } from "../firebase/firebaseConfig";
+
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
