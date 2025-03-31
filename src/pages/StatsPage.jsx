@@ -5,7 +5,6 @@ import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { app } from "../firebase/firebaseConfig";
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const StatsPage = () => {
