@@ -15,25 +15,36 @@ exports.processReplay = onObjectFinalized(async (event) => {
   const filePath = object.name;
 
   if (!filePath.endsWith(".aoe2record")) {
-    console.log("Archivo ignorado (no es .aoe2record):", filePath);
+    console.log("📦 Archivo ignorado (no es .aoe2record):", filePath);
     return;
   }
 
-  const tempLocalPath = `/tmp/${path.basename(filePath)}`;
+  const tempFilePath = `/tmp/${path.basename(filePath)}`;
   const bucket = storage.bucket(bucketName);
   const file = bucket.file(filePath);
-  await file.download({ destination: tempLocalPath });
-
-  const command = `python3 analyze/cli_analyze.py ${tempLocalPath}`;
+  await file.download({ destination: tempFilePath });
 
   try {
+    const command = "python3 analyze/cli_analyze.py \"" + tempFilePath + "\"";
+    console.log("🧪 PYTHONPATH:", path.join(__dirname, "pyenv"));
     console.log("⏳ Ejecutando análisis:", command);
-    execSync(command, { stdio: "inherit" });
 
-    const resultPath = path.join(__dirname, "analyze", "result.json");
-    if (!fs.existsSync(resultPath)) throw new Error("No se generó result.json");
+    execSync(command, {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        PYTHONPATH: path.join(__dirname, "pyenv"),
+      },
+    });
+
+    const resultPath = path.join(__dirname, "result.json");
+    if (!fs.existsSync(resultPath)) throw new Error("❌ No se generó result.json");
 
     const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
+    console.log("📄 Datos listos para guardar:", data);
+    console.log("✅ Datos guardados en Firestore");
+
+
     await db.collection("matches").add({
       fileName: path.basename(filePath),
       uploadedAt: new Date().toISOString(),
