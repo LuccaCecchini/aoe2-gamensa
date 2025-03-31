@@ -17,12 +17,10 @@ export default function Navbar({ user }) {
         <Link to="/">AoE2 Gamensa</Link>
       </div>
       <div className="flex gap-4">
-        <Link to="/" className="hover:underline">
-          Inicio
-        </Link>
-        <Link to="/upload" className="hover:underline">
-          Subir Partida
-        </Link>
+        <Link to="/" className="hover:underline">Inicio</Link>
+        <Link to="/upload" className="hover:underline">Subir Partida</Link>
+        <Link to="/stats" className="hover:underline">Estadísticas</Link>
+
         {user ? (
           <>
             <span className="text-sm">Hola, {user.email}</span>
@@ -35,15 +33,8 @@ export default function Navbar({ user }) {
           </>
         ) : (
           <>
-            <Link to="/stats" className="mr-4">
-              Estadísticas
-            </Link>
-            <Link to="/login" className="hover:underline">
-              Iniciar sesión
-            </Link>
-            <Link to="/register" className="hover:underline">
-              Registrarse
-            </Link>
+            <Link to="/login" className="hover:underline">Iniciar sesión</Link>
+            <Link to="/register" className="hover:underline">Registrarse</Link>
           </>
         )}
       </div>
