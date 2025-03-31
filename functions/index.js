@@ -25,11 +25,12 @@ exports.processReplay = onObjectFinalized(async (event) => {
   await file.download({ destination: tempFilePath });
 
   try {
-    const command = `PYTHONPATH=./pyenv python3 analyze/cli_analyze.py "${tempFilePath}"`;
+    const command = `python3 analyze/cli_analyze.py ${tempFilePath}`;
+    console.log("🧪 PYTHONPATH:", process.env.PYTHONPATH);
     console.log("⏳ Ejecutando comando:", command);
     execSync(command, { stdio: "inherit" });
 
-    const resultPath = "result.json";
+    const resultPath = "analyze/result.json";
     if (!fs.existsSync(resultPath)) throw new Error("No se generó result.json");
 
     const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
