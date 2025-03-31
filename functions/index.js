@@ -1,4 +1,3 @@
-// ultimodeploy
 const { onObjectFinalized } = require("firebase-functions/v2/storage");
 const admin = require("firebase-admin");
 const { Storage } = require("@google-cloud/storage");
@@ -12,7 +11,6 @@ const storage = new Storage();
 
 exports.processReplay = onObjectFinalized(async (event) => {
   const object = event.data;
-
   const bucketName = object.bucket;
   const filePath = object.name;
 
@@ -24,19 +22,15 @@ exports.processReplay = onObjectFinalized(async (event) => {
   const tempFilePath = `/tmp/${path.basename(filePath)}`;
   const bucket = storage.bucket(bucketName);
   const file = bucket.file(filePath);
-
   await file.download({ destination: tempFilePath });
 
   try {
-    // ✅ Ejecutar script de Python desde la carpeta correcta
-    const command = `python3 analyze/cli_analyze.py "${tempFilePath}"`;
+    const command = `PYTHONPATH=./pyenv python3 analyze/cli_analyze.py "${tempFilePath}"`;
+    console.log("⏳ Ejecutando comando:", command);
     execSync(command, { stdio: "inherit" });
 
-    // ✅ Leer archivo result.json generado por Python
     const resultPath = "result.json";
-    if (!fs.existsSync(resultPath)) {
-      throw new Error("No se generó result.json");
-    }
+    if (!fs.existsSync(resultPath)) throw new Error("No se generó result.json");
 
     const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
     await db.collection("matches").add({
@@ -50,4 +44,3 @@ exports.processReplay = onObjectFinalized(async (event) => {
     console.error("❌ Error al procesar partida:", err);
   }
 });
-

@@ -1,17 +1,17 @@
 {
   "players": [
     {
-      "name": "Dendy",
-      "civ": "Spanish",
-      "won": false
+      "name": "ChalkyGolf98753",
+      "civ": null,
+      "won": true
     },
     {
-      "name": "Bruno",
-      "civ": "Italians",
+      "name": "Lucca",
+      "civ": null,
       "won": false
     }
   ],
   "map": "Unknown",
   "duration": null,
-  "started": 1743397717575
+  "started": 1743398569935
 }
