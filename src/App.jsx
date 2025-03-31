@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Navbar from "./components/Navbar";
 import UploadGame from "./pages/UploadGame"
+import StatsPage from "./pages/StatsPage";
 import { listenToAuthChanges } from "./firebase/authListener";
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/upload" element={<UploadGame />} />
+        <Route path="/stats" element={<StatsPage />} /> {/* <-- Agregado */}
       </Routes>
     </div>
   );

@@ -35,6 +35,9 @@ export default function Navbar({ user }) {
           </>
         ) : (
           <>
+            <Link to="/stats" className="mr-4">
+              Estadísticas
+            </Link>
             <Link to="/login" className="hover:underline">
               Iniciar sesión
             </Link>

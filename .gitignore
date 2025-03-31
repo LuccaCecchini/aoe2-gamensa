@@ -49,3 +49,7 @@ lib-cov
 # En tu .gitignore
 functions/analyze/firebase-key.json
 
+functions/serviceAccountKey.json
+
+functions/analyze/recordings/
+functions/result.json
