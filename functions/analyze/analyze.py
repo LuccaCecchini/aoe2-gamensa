@@ -1,90 +1,52 @@
-import firebase_admin
-from firebase_admin import credentials, firestore, storage
 import os
 import sys
-from datetime import datetime
-from pathlib import Path
 import json
+from pathlib import Path
+from datetime import datetime
 
 # === CONFIG ===
-KEY_PATH = "firebase-key.json"
-RECORDINGS_FOLDER = "./recordings"
-AGEALYSER_SRC = "../functions/agealyser/src"
-BUCKET_NAME = "aoe2-gamensa.firebasestorage.app"
-STORAGE_FOLDER = "recordings"
-
-# === SETUP ===
+AGEALYSER_SRC = "../agealyser/src"
 sys.path.append(os.path.abspath(AGEALYSER_SRC))
 from agealyser.main import analyze_record
 
-cred = credentials.Certificate(KEY_PATH)
-firebase_admin.initialize_app(cred, {
-    'storageBucket': BUCKET_NAME
-})
-db = firestore.client()
-bucket = storage.bucket()
+if len(sys.argv) < 2:
+    print("❌ Debes pasar la ruta al archivo .aoe2record como argumento")
+    sys.exit(1)
 
-# === PROCESAR ARCHIVOS ===
-recordings = [f for f in os.listdir(RECORDINGS_FOLDER) if f.endswith(".aoe2record")]
+file_path = sys.argv[1]
 
-if not recordings:
-    print("⚠️  No se encontraron archivos .aoe2record en esta carpeta.")
-    sys.exit()
+if not os.path.exists(file_path):
+    print(f"❌ El archivo no existe: {file_path}")
+    sys.exit(1)
 
-for file in recordings:
-    file_path = os.path.join(RECORDINGS_FOLDER, file)
-    blob_path = f"{STORAGE_FOLDER}/{file}"
+try:
+    result = analyze_record(file_path)
 
-    # 📦 Verificar si ya está en Storage
-    if bucket.blob(blob_path).exists():
-        print(f"⏭️  Ya existe en Storage, omitiendo: {file}")
-        continue
+    if "players" not in result or "map_name" not in result:
+        print("❌ Resultado inválido, faltan campos esenciales.")
+        sys.exit(1)
 
-    # ☁️ Subir archivo a Storage
-    blob = bucket.blob(blob_path)
-    blob.upload_from_filename(file_path)
-    print(f"📤 Subido a Firebase Storage: {file}")
+    match_data = {
+        "fileName": os.path.basename(file_path),
+        "map": result.get("map_name", "Unknown"),
+        "duration": result.get("duration", 0),
+        "started": result.get("started", int(datetime.utcnow().timestamp() * 1000)),
+        "uploadedAt": datetime.utcnow().isoformat(),
+        "players": []
+    }
 
-    # 🧠 Analizar con AgeAlyser
-    try:
-        result = analyze_record(file_path)
-    except Exception as e:
-        print(f"❌ Error al analizar {file}: {e}")
-        continue
+    for name, civ in zip(result.get("players", []), result.get("civilisations", [])):
+        won = name in result.get("winner_names", [])
+        match_data["players"].append({
+            "name": name,
+            "civ": civ,
+            "won": won
+        })
 
-    # 🧾 Subir a Firestore
-    try:
-        if "players" not in result or "map_name" not in result:
-            print(f"❌ Resultado inválido para {file}, faltan campos esenciales.")
-            continue
+    with open("result.json", "w", encoding="utf-8") as f:
+        json.dump(match_data, f, ensure_ascii=False, indent=2)
 
-        players = [
-            {
-                "name": name,
-                "civ": civ,
-                "won": name in result.get("winner_names", [])
-            }
-            for name, civ in zip(result["players"], result["civilisations"])
-        ]
-
-        match_data = {
-            "fileName": file,
-            "map": result.get("map_name", "Unknown"),
-            "duration": result.get("duration", 0),
-            "started": int(datetime.utcnow().timestamp() * 1000),
-            "uploadedAt": datetime.utcnow().isoformat(),
-            "players": players
-        }
-
-        # 💾 Guardar JSON local para depuración
-        with open("result.json", "w", encoding="utf-8") as f:
-            json.dump(match_data, f, ensure_ascii=False, indent=2)
-
-        db.collection("matches").add(match_data)
-        print(f"✅ Partida subida con éxito: {file}")
-
-    except Exception as e:
-        print(f"❌ Error procesando datos de {file}: {e}")
-        continue
-
-print("🏁 Finalizado.")
+    print("✅ Análisis completado")
+except Exception as e:
+    print(f"❌ Error durante el análisis: {e}")
+    sys.exit(1)
