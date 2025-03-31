@@ -29,7 +29,7 @@ exports.processReplay = onObjectFinalized(async (event) => {
 
   try {
     // ✅ Ejecutar script de Python desde la carpeta correcta
-    const command = `python3 functions/analyze/cli_analyze.py "${tempFilePath}"`;
+    const command = `python3 analyze/cli_analyze.py "${tempFilePath}"`;
     execSync(command, { stdio: "inherit" });
 
     // ✅ Leer archivo result.json generado por Python
