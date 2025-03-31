@@ -7,17 +7,23 @@ from datetime import datetime
 
 # Agregar el path del parser
 sys.path.append(str(Path(__file__).resolve().parent.parent / "agealyser" / "src"))
-
 from agealyser.main import analyze_record
 
+# Verificar argumento
 if len(sys.argv) < 2:
-    print("❌ Debes proporcionar la ruta al archivo .aoe2record")
+    print("❌ Debes proporcionar el nombre del archivo .aoe2record")
     sys.exit(1)
 
-file_path = sys.argv[1]
+# Construir ruta completa al archivo
+recordings_dir = Path(__file__).resolve().parent / "recordings"
+file_name = sys.argv[1]
+file_path = recordings_dir / file_name
 
 try:
-    result = analyze_record(file_path)
+    result = analyze_record(str(file_path))
+
+    print("📦 Resultado recibido desde analyze_record:")
+    print(json.dumps(result, indent=2))
 
     if "players" not in result or "map_name" not in result:
         print("❌ Resultado incompleto")

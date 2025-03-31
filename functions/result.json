@@ -1,0 +1,17 @@
+{
+  "players": [
+    {
+      "name": "Dendy",
+      "civ": "Spanish",
+      "won": false
+    },
+    {
+      "name": "Bruno",
+      "civ": "Italians",
+      "won": false
+    }
+  ],
+  "map": "Unknown",
+  "duration": null,
+  "started": 1743397717575
+}
