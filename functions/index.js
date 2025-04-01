@@ -1,58 +1,66 @@
-const { onObjectFinalized } = require("firebase-functions/v2/storage");
-const admin = require("firebase-admin");
-const { Storage } = require("@google-cloud/storage");
-const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+const { onRequest } = require("firebase-functions/v2/https");
 
-admin.initializeApp();
-const db = admin.firestore();
-const storage = new Storage();
-
-exports.processReplay = onObjectFinalized(async (event) => {
-  const object = event.data;
-  const bucketName = object.bucket;
-  const filePath = object.name;
-
-  if (!filePath.endsWith(".aoe2record")) {
-    console.log("📦 Archivo ignorado (no es .aoe2record):", filePath);
-    return;
+exports.reprocessAllReplays = onRequest(async (req, res) => {
+  // Verificación simple de token de admin (opcional: mejorar con Auth real)
+  const adminKey = req.headers["x-admin-key"];
+  if (adminKey !== "654321") {
+    return res.status(403).json({ error: "Acceso denegado" });
   }
 
-  const tempFilePath = `/tmp/${path.basename(filePath)}`;
+  const bucketName = "aoe2-gamensa"; // Asegurate de que este nombre es correcto
   const bucket = storage.bucket(bucketName);
-  const file = bucket.file(filePath);
-  await file.download({ destination: tempFilePath });
+  const [files] = await bucket.getFiles({ prefix: "" });
 
-  try {
-    const command = "python3 analyze/cli_analyze.py \"" + tempFilePath + "\"";
-    console.log("🧪 PYTHONPATH:", path.join(__dirname, "pyenv"));
-    console.log("⏳ Ejecutando análisis:", command);
+  const aoe2Files = files.filter(file => file.name.endsWith(".aoe2record"));
 
-    execSync(command, {
-      stdio: "inherit",
-      env: {
-        ...process.env,
-        PYTHONPATH: path.join(__dirname, "pyenv"),
-      },
-    });
+  let success = 0;
+  let failed = [];
 
-    const resultPath = path.join(__dirname, "result.json");
-    if (!fs.existsSync(resultPath)) throw new Error("❌ No se generó result.json");
+  // 🔥 Primero borramos todos los documentos de 'matches'
+  const matchesSnapshot = await db.collection("matches").get();
+  const batch = db.batch();
+  matchesSnapshot.forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
+  console.log(`🧹 Borrados ${matchesSnapshot.size} documentos de 'matches'`);
 
-    const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
-    console.log("📄 Datos listos para guardar:", data);
-    console.log("✅ Datos guardados en Firestore");
+  for (const file of aoe2Files) {
+    const tempFilePath = `/tmp/${path.basename(file.name)}`;
+    try {
+      await file.download({ destination: tempFilePath });
 
+      const command = "python3 analyze/cli_analyze.py \"" + tempFilePath + "\"";
+      console.log("⏳ Reprocesando:", command);
 
-    await db.collection("matches").add({
-      fileName: path.basename(filePath),
-      uploadedAt: new Date().toISOString(),
-      ...data,
-    });
+      execSync(command, {
+        stdio: "inherit",
+        env: {
+          ...process.env,
+          PYTHONPATH: path.join(__dirname, "pyenv"),
+        },
+      });
 
-    console.log("✅ Partida procesada con éxito:", filePath);
-  } catch (err) {
-    console.error("❌ Error al procesar partida:", err);
+      const resultPath = path.join(__dirname, "result.json");
+      if (!fs.existsSync(resultPath)) throw new Error("❌ No se generó result.json");
+
+      const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
+      await db.collection("matches").add({
+        fileName: path.basename(file.name),
+        uploadedAt: new Date().toISOString(),
+        ...data,
+      });
+
+      console.log("✅ Partida procesada:", file.name);
+      success++;
+    } catch (err) {
+      console.error(`❌ Fallo al procesar ${file.name}:`, err);
+      failed.push(file.name);
+    }
   }
+
+  return res.json({
+    message: "Reprocesamiento finalizado",
+    total: aoe2Files.length,
+    success,
+    failed,
+  });
 });

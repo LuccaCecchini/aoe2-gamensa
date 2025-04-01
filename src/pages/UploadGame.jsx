@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { ReprocessMatches } from "./ReprocessMatches";
 import { db } from "../firebase/firebaseConfig";
 
 export default function UploadGame() {

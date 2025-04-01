@@ -7,7 +7,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 agealyser_path = os.path.abspath(os.path.join(current_dir, "..", "agealyser", "src"))
 sys.path.insert(0, agealyser_path)
 
-from agealyser.main import analyze_record
+from agealyser.main_lite import analyze_record
 
 # Verificar argumento
 if len(sys.argv) < 2:
