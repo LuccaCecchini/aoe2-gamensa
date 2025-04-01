@@ -6,7 +6,7 @@
       "build": "cp -r pyenv/lib/site-packages/* process_replay_py/"
     },
     "engines": {
-      "node": "22"
+      "node": "18"
     },
     "type": "commonjs",
     "dependencies": {
