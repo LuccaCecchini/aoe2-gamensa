@@ -11,7 +11,7 @@ export function ReprocessMatches() {
     setLogs((prev) => [...prev, "⏳ Iniciando reprocesamiento..."]);
 
     try {
-      const response = await fetch("https://us-central1-aoe2-gamensa.cloudfunctions.net/reprocessallreplays", {
+      const response = await fetch("https://us-central1-aoe2-gamensa.cloudfunctions.net/reprocessAllReplays", {
         method: "GET",
         headers: {
           "x-admin-key": "654321",
