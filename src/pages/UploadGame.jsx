@@ -79,6 +79,9 @@ export default function UploadGame() {
       >
         Subir Partida
       </button>
+      <div className="mt-10 w-full max-w-xl">
+      <ReprocessMatches />
+      </div>
     </div>
   );
 }
